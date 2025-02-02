@@ -1,0 +1,4 @@
+<resources>
+    <color name="your_light_status_bar_color">#FFFFFFFF</color> <!-- White -->
+    <color name="your_dark_status_bar_color">#FF000000</color> <!-- Black -->
+</resources>
