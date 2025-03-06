@@ -19,8 +19,8 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 public class MainActivity extends AppCompatActivity {
 
     private WebView webView;
-    private SwipeRefreshLayout swipeRefreshLayout; // For pull-to-refresh
-    private long lastBackPressTime = 0; // For double-tap to exit
+    private SwipeRefreshLayout swipeRefreshLayout;
+    private long lastBackPressTime = 0;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -28,61 +28,70 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Set status bar to black
         makeStatusBarBlack();
 
-        // Initialize SwipeRefreshLayout
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
-        swipeRefreshLayout.setOnRefreshListener(() -> {
-            // Reload the WebView when user pulls down
-            webView.reload();
-        });
+        swipeRefreshLayout.setOnRefreshListener(() -> webView.reload());
 
-        // Initialize WebView
         webView = findViewById(R.id.webViewID);
         WebSettings webSettings = webView.getSettings();
 
-        // Enable necessary settings
-        webSettings.setJavaScriptEnabled(true);
-        webSettings.setDomStorageEnabled(true); // Enable DOM storage
-        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT); // Enable caching
+        // Enable built-in zoom controls
+        webSettings.setSupportZoom(true);
+        webSettings.setBuiltInZoomControls(true);
+        webSettings.setDisplayZoomControls(false); // Hide default zoom controls
 
-        // Set clients
+        // Enable other settings
+        webSettings.setJavaScriptEnabled(true);
+        webSettings.setDomStorageEnabled(true);
+        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+
+        // Add custom gesture listener
+        webView.setOnTouchListener(new OnSwipeTouchListener(this) {
+            @Override
+            public void onSwipeTwoFingerRight() {
+                zoomOut();
+            }
+
+            @Override
+            public void onSwipeTwoFingerLeft() {
+                zoomIn();
+            }
+        });
+
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                // Disable the refresh indicator once the page finishes loading
                 swipeRefreshLayout.setRefreshing(false);
             }
 
             @Override
             public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-                // Handle errors
                 view.loadUrl("about:blank");
-                // You can show a custom error page here
                 swipeRefreshLayout.setRefreshing(false);
             }
         });
 
-        webView.setWebChromeClient(new WebChromeClient()); // For better JS support
-
-        // Enable debugging (optional)
+        webView.setWebChromeClient(new WebChromeClient());
         WebView.setWebContentsDebuggingEnabled(true);
-
-        // Load the URL
-        webView.loadUrl("https://fardins-diary.vercel.app/");
+        webView.loadUrl("https://devblog-app.vercel.app/");
     }
 
-    // Handle back button press
+    private void zoomIn() {
+        webView.zoomIn(); // Use WebView's built-in zoom
+    }
+
+    private void zoomOut() {
+        webView.zoomOut(); // Use WebView's built-in zoom
+    }
+
     @Override
     public void onBackPressed() {
         if (webView.canGoBack()) {
-            // If WebView can go back, go back
             webView.goBack();
         } else {
-            // Show a toast message before exiting
-            if (System.currentTimeMillis() - lastBackPressTime < 2000) { // 2 seconds
-                super.onBackPressed(); // Exit the app
+            if (System.currentTimeMillis() - lastBackPressTime < 2000) {
+                super.onBackPressed();
             } else {
                 Toast.makeText(this, "Press back again to exit", Toast.LENGTH_SHORT).show();
                 lastBackPressTime = System.currentTimeMillis();
@@ -90,14 +99,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Make the status bar black
     private void makeStatusBarBlack() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             Window window = getWindow();
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-            window.setStatusBarColor(Color.rgb(15, 23, 42)); // Set status bar color to black
+            window.setStatusBarColor(Color.rgb(15, 23, 42));
             window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         }
     }
 }
-
